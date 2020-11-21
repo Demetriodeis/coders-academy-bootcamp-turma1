@@ -28,8 +28,12 @@ namespace CodersAcademy.API.Respository
 
         public async Task CreateAsync(Album album)
         {
-            this.Context.AddAsync(album);
+            await this.Context.Albums.AddAsync(album);
             await this.Context.SaveChangesAsync();
         }
+
+        public async Task<Music> GetMusicAsync(Guid musicId) 
+            => await this.Context.Music.Where(x => x.Id == musicId).FirstOrDefaultAsync();
+        
     }
 }

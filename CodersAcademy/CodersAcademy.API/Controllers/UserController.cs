@@ -19,14 +19,38 @@ namespace CodersAcademy.API.Controllers
     {
         private UserRepository UserRepository { get; set; }
         private IMapper Mapper { get; set; }
-        private AlbumRepository AlbumRep0ository { get; set; }
+        private AlbumRepository AlbumRepository { get; set; }
         public byte[] Encodin { get; private set; }
 
         public UserController(UserRepository userRepository,IMapper mapper, AlbumRepository albumRepository)
         {
             this.UserRepository = userRepository;
             Mapper = mapper;
-            AlbumRep0ository = albumRepository;
+            AlbumRepository = albumRepository;
+        }
+
+        // Get Users
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUser(Guid id)
+        {
+            var user = await this.UserRepository.GetUserAsync(id);
+
+            if (user == null) return NotFound();
+
+            var result = this.Mapper.Map<UserResponse>(user);
+
+            return Ok(result);
+        }
+
+        //Get All User
+        [HttpGet()]
+        public async Task<IActionResult> GetAllUser(Guid id)
+        {
+            var users = await this.UserRepository.GetAllAsync();
+
+            var result = this.Mapper.Map<List<UserResponse>>(users);
+
+            return Ok(result);
         }
 
         //Authentic User
@@ -42,7 +66,7 @@ namespace CodersAcademy.API.Controllers
 
             if(user == null)
             {
-                return UnprocessableEntity(new
+                return Unauthorized(new
                 {
                     Message = "Email/Senha inválidos"
                 });
@@ -53,6 +77,7 @@ namespace CodersAcademy.API.Controllers
             return Ok(result);
 
         }
+
         //Register User
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -72,9 +97,74 @@ namespace CodersAcademy.API.Controllers
             return Created($"{result.Id}", result);
             
         }
-        //API of Favorite
-        //API remove Favorite
-        //API ALL Favorite of Users
 
+        // Delete User
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> RemoveUser(Guid id)
+        {
+            var user = await this.UserRepository.GetUserAsync(id);
+
+            if (user == null)
+                return UnprocessableEntity(new { Message = "User not found" });        
+
+            await this.UserRepository.RemoveAsync(user);
+
+            return NoContent();
+        }
+
+        //API add favorite music 
+        [HttpPost("{id}/favorite-music/{musicId}")]
+        public async Task<IActionResult> SaveUserFavoriteMusic(Guid id, Guid musicId)
+        {
+            var music = await this.AlbumRepository.GetMusicAsync(musicId);
+            var user = await this.UserRepository.GetUserAsync(id);
+
+            if(user == null)
+            {
+                return UnprocessableEntity(new {
+                    Message = "User not found"
+                });
+            }
+            if(music == null)
+            {
+                return UnprocessableEntity(new
+                {
+                    Message = "Music not found"
+                });
+            }
+
+            user.AddFavoriteMusic(music);
+            await this.UserRepository.UpdateAsync(user);
+
+            return Ok();
+        }
+
+        //API remove Favorite
+        [HttpDelete("{id}/favorite-music/{musicId}")]
+        public async Task<IActionResult> RemoveUserFavoriteMusic(Guid id, Guid musicId)
+        {
+            var music = await this.AlbumRepository.GetMusicAsync(musicId);
+            var user = await this.UserRepository.GetUserAsync(id);
+
+            if (user == null)
+            {
+                return UnprocessableEntity(new
+                {
+                    Message = "User not found"
+                });
+            }
+            if (music == null)
+            {
+                return UnprocessableEntity(new
+                {
+                    Message = "Music not found"
+                });
+            }
+
+            user.RemoveFavoriteMusic(music);
+            await this.UserRepository.UpdateAsync(user);
+
+            return Ok();
+        }
     }
 }
