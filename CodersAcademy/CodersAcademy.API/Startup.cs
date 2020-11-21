@@ -40,6 +40,7 @@ namespace CodersAcademy.API
             services.AddAutoMapper(typeof(Startup).Assembly);
 
             services.AddScoped<AlbumRepository>();
+            services.AddScoped<UserRepository>();
 
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new OpenApiInfo()
